@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Cryptography.Xml;
 using TB3.WebApi.Database.AppDbContextModels;
+using TB3.WebApi.Services;
 
 namespace TB3.WebApi.Controllers;
 
@@ -9,104 +11,89 @@ namespace TB3.WebApi.Controllers;
 [ApiController]
 public class ProductController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly ProductService _productService;
     public ProductController()
     {
-        _db = new AppDbContext();
+        _productService = new ProductService();
     }
 
-    [HttpGet]
-    public IActionResult GetProducts()
+    [HttpGet("{pageNo}/{pageSize}")]
+    public IActionResult GetProducts(int pageNo, int pageSize)
     {
-        var lst = _db.TblProducts
-            .OrderByDescending(x => x.ProductId)
-            .Where(x => x.DeleteFlag == false)
-            .ToList();
-        return Ok(lst);
+        var result = _productService.GetProducts(pageNo, pageSize);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+        return Ok(result);
     }
 
     [HttpGet("{id}")]
     public IActionResult GetProduct(int id)
     {
-        var item = _db.TblProducts.FirstOrDefault(x => x.ProductId == id);
-        if (item is null)
+        var result = _productService.GetProductById(id);
+        if (!result.IsSuccess)
         {
-            return NotFound("Product not found.");
+            return BadRequest(result);
         }
-        var response = new ProductGetResponseDto
-        {
-            ProductName = item.ProductName
-        };
-        return Ok(response);
+        return Ok(result);
     }
 
     [HttpPost]
     public IActionResult CreateProducts(ProductCreateRequestDto request)
     {
-        _db.TblProducts.Add(new TblProduct
+        
+        var result = _productService.CreateProducts(request);
+        if (!result.IsSuccess)
         {
-            CreateDateTime = DateTime.Now,
-            Price = request.Price,
-            DeleteFlag = false,
-            ProductName = request.ProductName,
-            Quantity = request.Quantity,
-        });
-        _db.SaveChanges();
-        return Ok("CreateProducts");
+            return BadRequest(result);
+        }
+        return Ok(result);
     }
     [HttpPut("{id}")]
-    public IActionResult UpdateProducts(int id,ProductUpdateRequestDto request)
+    public IActionResult UpdateProducts(int id, ProductUpdateRequestDto request)
     {
-        var item = _db.TblProducts.FirstOrDefault(x => x.ProductId == id);
-        if (item is null)
+        //var item = _db.TblProducts.FirstOrDefault(x => x.ProductId == id);
+        //if (item is null)
+        //{
+        //    return NotFound("Product not found.");
+        //}
+
+        //item.ProductName = request.ProductName;
+        //item.Price = request.Price;
+        //item.Quantity = request.Quantity;
+        //item.ModifiedDateTime = DateTime.Now;
+        //int result = _db.SaveChanges();
+        //string message = result > 0 ? "Updating Successful." : "Updating Failed.";
+
+        //return Ok(message);
+        var result = _productService.UpdateProducts(id,request);
+        if (!result.IsSuccess)
         {
-            return NotFound("Product not found.");
+            return BadRequest(result);
         }
-
-        item.ProductName = request.ProductName;
-        item.Price = request.Price;
-        item.Quantity = request.Quantity;
-        item.ModifiedDateTime = DateTime.Now;
-        int result = _db.SaveChanges();
-        string message = result > 0 ? "Updating Successful." : "Updating Failed.";
-
-        return Ok(message);
+        return Ok(result);
     }
     [HttpPatch("{id}")]
-    public IActionResult PatchProducts(int id,ProductPatchRequestDto request)
+    public IActionResult PatchProducts(int id, ProductPatchRequestDto request)
     {
-        var item = _db.TblProducts.FirstOrDefault(x => x.ProductId == id);
-        if (item is null)
+        var result = _productService.PatchProducts(id, request);
+        if (!result.IsSuccess)
         {
-            return NotFound("Product not found.");
+            return BadRequest(result);
         }
+        return Ok(result);
 
-        if (!string.IsNullOrEmpty(request.ProductName))
-            item.ProductName = request.ProductName;
-        if (request.Price is not null && request.Price > 0)
-            item.Price = request.Price ?? 0;
-        //item.Price = Convert.ToDecimal(request.Price);
-        if (request.Quantity is not null && request.Quantity > 0)
-            item.Quantity = request.Quantity ?? 0;
-        item.ModifiedDateTime = DateTime.Now;
-        int result = _db.SaveChanges();
-        string message = result > 0 ? "Patching Successful." : "Patching Failed.";
-
-        return Ok(message);
     }
     [HttpDelete("{id}")]
     public IActionResult DeleteProducts(int id)
     {
-        var item = _db.TblProducts.FirstOrDefault(x => x.ProductId == id);
-        if (item is null)
+        var result = _productService.DeleteProducts(id);
+        if (!result.IsSuccess)
         {
-            return NotFound("Product not found.");
+            return BadRequest(result);
         }
-        item.DeleteFlag = true;
-        int result = _db.SaveChanges();
-        string message = result > 0 ? "Deleting Successful." : "Deleting Failed.";
-
-        return Ok(message);
+        return Ok(result);
     }
 }
 
