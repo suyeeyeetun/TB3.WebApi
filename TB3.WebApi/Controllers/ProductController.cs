@@ -126,4 +126,7 @@ public class ProductPatchRequestDto
 public class ProductGetResponseDto
 {
     public string ProductName { get; set; }
+    public bool IsSuccess { get; internal set; }
+    public string Message { get; internal set; }
+    public List<ProductDto> Products { get; internal set; }
 }
