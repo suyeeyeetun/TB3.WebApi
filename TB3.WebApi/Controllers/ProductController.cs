@@ -11,10 +11,11 @@ namespace TB3.WebApi.Controllers;
 [ApiController]
 public class ProductController : ControllerBase
 {
-    private readonly ProductService _productService;
-    public ProductController()
+    private readonly IProductService _productService;
+
+    public ProductController(IProductService productService)
     {
-        _productService = new ProductService();
+        _productService = productService;
     }
 
     [HttpGet("{pageNo}/{pageSize}")]

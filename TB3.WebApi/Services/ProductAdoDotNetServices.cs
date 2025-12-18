@@ -4,23 +4,17 @@ using TB3.WebApi.Controllers;
 
 namespace TB3.WebApi.Services
 {
-    public class ProductAdoDotNetService
+    public class ProductAdoDotNetService : IProductAdoDotNetService
     {
         private readonly string _connectionString;
 
-        public ProductAdoDotNetService(string connectionString)
+        public ProductAdoDotNetService(IConfiguration configuration)
         {
-            _connectionString = connectionString;
+            _connectionString = configuration.GetConnectionString("DbConnection")!;
         }
 
-        private SqlConnection GetConnection()
-        {
-            return new SqlConnection(_connectionString);
-        }
 
-        // **********************************************
         // GET PRODUCTS (PAGING)
-        // **********************************************
         public ProductGetResponseDto GetProducts(int pageNo, int pageSize)
         {
             if (pageNo <= 0 || pageSize <= 0)
@@ -34,8 +28,7 @@ namespace TB3.WebApi.Services
 
             List<ProductDto> products = new();
 
-            using (SqlConnection conn = GetConnection())
-            {
+            SqlConnection conn = new SqlConnection(_connectionString);
                 conn.Open();
 
                 string query = @"
@@ -60,7 +53,7 @@ namespace TB3.WebApi.Services
                         Price = Convert.ToDecimal(reader["Price"])
                     });
                 }
-            }
+            conn.Close();
 
             return new ProductGetResponseDto
             {
@@ -70,9 +63,7 @@ namespace TB3.WebApi.Services
             };
         }
 
-        // **********************************************
         // GET PRODUCT BY ID
-        // **********************************************
         public ProductGetByIdResponseDto GetProductById(int id)
         {
             if (id <= 0)
@@ -84,7 +75,7 @@ namespace TB3.WebApi.Services
                 };
             }
 
-            using SqlConnection conn = GetConnection();
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
 
             string query = @"
@@ -96,7 +87,7 @@ namespace TB3.WebApi.Services
             cmd.Parameters.AddWithValue("@Id", id);
 
             SqlDataReader reader = cmd.ExecuteReader();
-
+            
             if (!reader.Read())
             {
                 return new ProductGetByIdResponseDto
@@ -105,7 +96,7 @@ namespace TB3.WebApi.Services
                     Message = "Product not found."
                 };
             }
-
+            
             return new ProductGetByIdResponseDto
             {
                 IsSuccess = true,
@@ -118,11 +109,10 @@ namespace TB3.WebApi.Services
                     Price = Convert.ToDecimal(reader["Price"])
                 }
             };
+            conn.Close();
         }
 
-        // **********************************************
         // CREATE PRODUCT
-        // **********************************************
         public ProductResponseDto CreateProducts(ProductCreateRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.ProductName))
@@ -134,7 +124,7 @@ namespace TB3.WebApi.Services
             if (request.Quantity < 0)
                 return Fail("Quantity cannot be negative.");
 
-            using SqlConnection conn = GetConnection();
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
 
             string query = @"
@@ -146,20 +136,20 @@ namespace TB3.WebApi.Services
             cmd.Parameters.AddWithValue("@Name", request.ProductName);
             cmd.Parameters.AddWithValue("@Qty", request.Quantity);
             cmd.Parameters.AddWithValue("@Price", request.Price);
-
+           
             int result = cmd.ExecuteNonQuery();
+            conn.Close();
             return result > 0 ? Success() : Fail("Create failed.");
         }
 
-        // **********************************************
+       
         // UPDATE PRODUCT (PUT)
-        // **********************************************
         public ProductResponseDto UpdateProducts(int id, ProductUpdateRequestDto request)
         {
             if (id <= 0)
                 return Fail("Id must be greater than zero.");
 
-            using SqlConnection conn = GetConnection();
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
 
             string query = @"
@@ -175,17 +165,16 @@ namespace TB3.WebApi.Services
             cmd.Parameters.AddWithValue("@Name", request.ProductName);
             cmd.Parameters.AddWithValue("@Qty", request.Quantity);
             cmd.Parameters.AddWithValue("@Price", request.Price);
-
+            
             int result = cmd.ExecuteNonQuery();
+            conn.Close();
             return result > 0 ? Success() : Fail("Update failed.");
         }
 
-        // **********************************************
         // PATCH PRODUCT
-        // **********************************************
         public ProductResponseDto PatchProducts(int id, ProductPatchRequestDto request)
         {
-            using SqlConnection conn = GetConnection();
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
 
             string selectQuery = @"
@@ -222,17 +211,16 @@ namespace TB3.WebApi.Services
             updateCmd.Parameters.AddWithValue("@Name", name);
             updateCmd.Parameters.AddWithValue("@Qty", qty);
             updateCmd.Parameters.AddWithValue("@Price", price);
-
+           
             int result = updateCmd.ExecuteNonQuery();
+            conn.Close();
             return result > 0 ? Success() : Fail("Patch failed.");
         }
 
-        // **********************************************
         // SOFT DELETE
-        // **********************************************
         public ProductResponseDto DeleteProducts(int id)
         {
-            using SqlConnection conn = GetConnection();
+            SqlConnection conn = new SqlConnection(_connectionString);
             conn.Open();
 
             string query = @"
@@ -242,14 +230,13 @@ namespace TB3.WebApi.Services
 
             SqlCommand cmd = new SqlCommand(query, conn);
             cmd.Parameters.AddWithValue("@Id", id);
-
+           
             int result = cmd.ExecuteNonQuery();
+            conn.Close();
             return result > 0 ? Success() : Fail("Delete failed.");
         }
 
-        // **********************************************
-        // HELPERS
-        // **********************************************
+        // Dtos
         private ProductResponseDto Success()
             => new ProductResponseDto { IsSuccess = true, Message = "Success" };
 

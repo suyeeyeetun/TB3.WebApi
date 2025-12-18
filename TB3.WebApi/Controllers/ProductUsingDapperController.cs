@@ -10,35 +10,34 @@ namespace TB3.WebApi.Controllers;
 [ApiController]
 public class ProductUsingDapperController : ControllerBase
 {
-    private readonly ProductDapperService _service;
+    private readonly IProductDapperService _productDapperService;
 
-    public ProductUsingDapperController(IConfiguration config)
+    public ProductUsingDapperController(IProductDapperService productDapperService)
     {
-        _service = new ProductDapperService(
-            config.GetConnectionString("DbConnection"));
+        _productDapperService = productDapperService;
     }
 
     [HttpGet]
     public IActionResult Get(int pageNo = 1, int pageSize = 10)
-        => Ok(_service.GetProducts(pageNo, pageSize));
+        => Ok(_productDapperService.GetProducts(pageNo, pageSize));
 
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
-        => Ok(_service.GetProductById(id));
+        => Ok(_productDapperService.GetProductById(id));
 
     [HttpPost]
     public IActionResult Create(ProductCreateRequestDto dto)
-        => Ok(_service.CreateProducts(dto));
+        => Ok(_productDapperService.CreateProducts(dto));
 
     [HttpPut("{id}")]
     public IActionResult Update(int id, ProductUpdateRequestDto dto)
-        => Ok(_service.UpdateProducts(id, dto));
+        => Ok(_productDapperService.UpdateProducts(id, dto));
 
     [HttpPatch("{id}")]
     public IActionResult Patch(int id, ProductPatchRequestDto dto)
-        => Ok(_service.PatchProducts(id, dto));
+        => Ok(_productDapperService.PatchProducts(id, dto));
 
     [HttpDelete("{id}")]
     public IActionResult Delete(int id)
-        => Ok(_service.DeleteProducts(id));
+        => Ok(_productDapperService.DeleteProducts(id));
 }

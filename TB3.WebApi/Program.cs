@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using TB3.WebApi.Database.AppDbContextModels;
 using TB3.WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -9,11 +11,16 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<ProductAdoDotNetService>(sp =>
-    new ProductAdoDotNetService(
-        sp.GetRequiredService<IConfiguration>()
-          .GetConnectionString("DbConnection")!
-    ));
+
+
+builder.Services.AddScoped<IProductAdoDotNetService, ProductAdoDotNetService>();
+builder.Services.AddScoped<IProductDapperService, ProductDapperService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+
+builder.Services.AddDbContext<AppDbContext>(opt =>
+{
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("DbConnection")!);
+});
 
 
 

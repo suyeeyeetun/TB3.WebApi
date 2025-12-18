@@ -5,17 +5,17 @@ using TB3.WebApi.Database.AppDbContextModels;
 
 namespace TB3.WebApi.Services;
 
-public class ProductService
+public class ProductService : IProductService
 {
     private readonly AppDbContext _db;
-    public ProductService()
+    public ProductService(AppDbContext db)
     {
-        _db = new AppDbContext();
+        _db = db;
     }
     public ProductGetResponseDto GetProducts(int pageNo, int pageSize)
     {
         ProductGetResponseDto dto = new ProductGetResponseDto();
-        if(pageNo == 0)
+        if (pageNo == 0)
         {
             dto = new ProductGetResponseDto()
             {
@@ -109,7 +109,7 @@ public class ProductService
     public ProductResponseDto CreateProducts(ProductCreateRequestDto request)
     {
         ProductResponseDto dto = new ProductResponseDto();
-       
+
         if (string.IsNullOrEmpty(request.ProductName))
         {
             dto = new ProductResponseDto
@@ -156,7 +156,7 @@ public class ProductService
         return dto;
     }
 
-    public ProductResponseDto UpdateProducts(int id,ProductUpdateRequestDto request)
+    public ProductResponseDto UpdateProducts(int id, ProductUpdateRequestDto request)
     {
         ProductResponseDto dto = new ProductResponseDto();
         var item = _db.TblProducts
@@ -213,8 +213,8 @@ public class ProductService
         };
         return dto;
     }
-    
-    public ProductResponseDto PatchProducts(int id,ProductPatchRequestDto request)
+
+    public ProductResponseDto PatchProducts(int id, ProductPatchRequestDto request)
     {
         ProductResponseDto dto = new ProductResponseDto();
 
@@ -231,7 +231,7 @@ public class ProductService
             return dto;
         }
 
-        if(string.IsNullOrEmpty(request.ProductName) && (request.Price <=0 || request.Price is null) && (request.Quantity <= 0 || request.Quantity is null))
+        if (string.IsNullOrEmpty(request.ProductName) && (request.Price <= 0 || request.Price is null) && (request.Quantity <= 0 || request.Quantity is null))
         {
             dto = new ProductResponseDto
             {
@@ -274,7 +274,7 @@ public class ProductService
             };
             return dto;
         }
-        if(id <= 0)
+        if (id <= 0)
         {
             dto = new ProductResponseDto()
             {

@@ -5,23 +5,18 @@ using TB3.WebApi.Controllers;
 
 namespace TB3.WebApi.Services
 {
-    public class ProductDapperService
+    public class ProductDapperService : IProductDapperService
     {
         private readonly string _connectionString;
 
-        public ProductDapperService(string connectionString)
+        public ProductDapperService(IConfiguration configuration)
         {
-            _connectionString = connectionString;
+            _connectionString = configuration.GetConnectionString("DbConnection")!;
         }
 
-        private IDbConnection GetConnection()
-        {
-            return new SqlConnection(_connectionString);
-        }
 
-        // **********************************************
+
         // GET PRODUCTS (PAGING)
-        // **********************************************
         public ProductGetResponseDto GetProducts(int pageNo, int pageSize)
         {
             if (pageNo <= 0 || pageSize <= 0)
@@ -33,8 +28,8 @@ namespace TB3.WebApi.Services
                 };
             }
 
-            using var db = GetConnection();
-
+           IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
             string query = @"
             SELECT ProductId, ProductName, Quantity, Price
             FROM Tbl_Product
@@ -56,9 +51,8 @@ namespace TB3.WebApi.Services
             };
         }
 
-        // **********************************************
+        
         // GET PRODUCT BY ID
-        // **********************************************
         public ProductGetByIdResponseDto GetProductById(int id)
         {
             if (id <= 0)
@@ -70,8 +64,8 @@ namespace TB3.WebApi.Services
                 };
             }
 
-            using var db = GetConnection();
-
+            IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
             string query = @"
             SELECT ProductId, ProductName, Quantity, Price
             FROM Tbl_Product
@@ -96,9 +90,8 @@ namespace TB3.WebApi.Services
             };
         }
 
-        // **********************************************
+        
         // CREATE PRODUCT
-        // **********************************************
         public ProductResponseDto CreateProducts(ProductCreateRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.ProductName))
@@ -110,7 +103,9 @@ namespace TB3.WebApi.Services
             if (request.Quantity < 0)
                 return Fail("Quantity cannot be negative.");
 
-            using var db = GetConnection();
+
+            IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
 
             string query = @"
             INSERT INTO Tbl_Product
@@ -122,9 +117,8 @@ namespace TB3.WebApi.Services
             return result > 0 ? Success() : Fail("Create failed.");
         }
 
-        // **********************************************
+        
         // UPDATE PRODUCT (PUT)
-        // **********************************************
         public ProductResponseDto UpdateProducts(int id, ProductUpdateRequestDto request)
         {
             if (id <= 0)
@@ -139,7 +133,8 @@ namespace TB3.WebApi.Services
             if (request.Quantity < 0)
                 return Fail("Quantity cannot be negative.");
 
-            using var db = GetConnection();
+            IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
 
             string query = @"
             UPDATE Tbl_Product
@@ -160,12 +155,12 @@ namespace TB3.WebApi.Services
             return result > 0 ? Success() : Fail("Update failed.");
         }
 
-        // **********************************************
         // PATCH PRODUCT
-        // **********************************************
         public ProductResponseDto PatchProducts(int id, ProductPatchRequestDto request)
         {
-            using var db = GetConnection();
+
+            IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
 
             string selectQuery = @"
             SELECT ProductId, ProductName, Quantity, Price
@@ -201,15 +196,15 @@ namespace TB3.WebApi.Services
             return result > 0 ? Success() : Fail("Patch failed.");
         }
 
-        // **********************************************
         // SOFT DELETE
-        // **********************************************
         public ProductResponseDto DeleteProducts(int id)
         {
             if (id <= 0)
                 return Fail("Id must be greater than zero.");
 
-            using var db = GetConnection();
+
+            IDbConnection db = new SqlConnection(_connectionString);
+            db.Open();
 
             string query = @"
             UPDATE Tbl_Product
@@ -222,9 +217,7 @@ namespace TB3.WebApi.Services
             return result > 0 ? Success() : Fail("Delete failed.");
         }
 
-        // **********************************************
-        // HELPER METHODS
-        // **********************************************
+        // Dtos
         private ProductResponseDto Success() =>
             new ProductResponseDto { IsSuccess = true, Message = "Success" };
 
